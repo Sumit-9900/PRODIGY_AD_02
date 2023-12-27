@@ -5,8 +5,12 @@ part 'todo_model.g.dart';
 class ToDo extends HiveObject {
   ToDo({
     required this.title,
+    this.check = false,
   });
 
   @HiveField(0)
   String title;
+
+  @HiveField(1)
+  bool check;
 }

@@ -3,13 +3,18 @@ import 'package:hive_flutter/adapters.dart';
 import 'package:todo_list_3/hive_boxes/boxes.dart';
 import 'package:todo_list_3/models/todo_model.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final titlecontroller = TextEditingController();
+  State<HomeScreen> createState() => _HomeScreenState();
+}
 
+class _HomeScreenState extends State<HomeScreen> {
+  // var check = false;
+  final titlecontroller = TextEditingController();
+  @override
+  Widget build(BuildContext context) {
     Future<void> add() async {
       final data = ToDo(title: titlecontroller.text);
       final box = Boxes.getData();
@@ -123,10 +128,23 @@ class HomeScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16.0),
                 ),
                 child: ListTile(
-                  title: Text(dabba[index].title),
+                  title: Text(
+                    dabba[index].title,
+                    style: TextStyle(
+                      decoration: dabba[index].check == true
+                          ? TextDecoration.lineThrough
+                          : TextDecoration.none,
+                    ),
+                  ),
                   leading: Checkbox(
-                    value: false,
-                    onChanged: (value) {},
+                    value: dabba[index].check,
+                    onChanged: (value) {
+                      setState(() {
+                        if (value != null) {
+                          dabba[index].check = value;
+                        }
+                      });
+                    },
                   ),
                   trailing: SizedBox(
                     width: 100.0,
