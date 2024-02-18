@@ -11,7 +11,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // var check = false;
   final titlecontroller = TextEditingController();
   @override
   Widget build(BuildContext context) {
