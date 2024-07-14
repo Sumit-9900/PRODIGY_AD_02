@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/adapters.dart';
-import 'package:todo_list_3/hive_boxes/boxes.dart';
-import 'package:todo_list_3/models/todo_model.dart';
+import 'package:provider/provider.dart';
+import 'package:todo_list_3/provider/todo_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,172 +11,164 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final titlecontroller = TextEditingController();
+  final textcontroller = TextEditingController();
+
+  @override
+  void dispose() {
+    titlecontroller.dispose();
+    textcontroller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    Future<void> add() async {
-      final data = ToDo(title: titlecontroller.text);
-      final box = Boxes.getData();
-
-      await box.add(data);
-
-      await data.save();
-
-      titlecontroller.clear();
-
-      if (context.mounted) {
-        Navigator.of(context).pop();
-      }
-    }
-
-    void adddialog() {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Add ToDo'),
-          content: TextField(
-            controller: titlecontroller,
-            decoration: const InputDecoration(
-              hintText: 'Enter ToDo',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: add,
-              child: const Text('Add'),
-            ),
-            TextButton(
-              onPressed: () {
-                titlecontroller.clear();
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    Future<void> edit(ToDo todo) async {
-      todo.title = titlecontroller.text;
-
-      await todo.save();
-
-      titlecontroller.clear();
-
-      if (context.mounted) {
-        Navigator.of(context).pop();
-      }
-    }
-
-    void editdialog(ToDo todo, String title) {
-      titlecontroller.text = title;
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Edit ToDo'),
-          content: TextField(
-            controller: titlecontroller,
-            decoration: const InputDecoration(
-              hintText: 'Edit ToDo',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                edit(todo);
-              },
-              child: const Text('Edit'),
-            ),
-            TextButton(
-              onPressed: () {
-                titlecontroller.clear();
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-          ],
-        ),
-      );
-    }
-
+    final provider = Provider.of<ToDoProvider>(context);
+    provider.getToDos();
     return Scaffold(
       appBar: AppBar(
         title: const Text('ToDo List'),
         centerTitle: true,
         backgroundColor: const Color.fromARGB(200, 167, 194, 208),
       ),
-      body: ValueListenableBuilder<Box<ToDo>>(
-        valueListenable: Boxes.getData().listenable(),
-        builder: (context, box, _) {
-          var dabba = box.values.toList().cast<ToDo>();
-          return ListView.builder(
-            itemCount: dabba.length,
-            itemBuilder: (context, index) {
-              return Container(
-                margin: const EdgeInsets.only(
-                  left: 22.0,
-                  right: 22.0,
-                  top: 26.0,
-                  bottom: 0.0,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(198, 119, 168, 192),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 20.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: titlecontroller,
+              decoration: InputDecoration(
+                hintText: 'Enter ToDo',
+                border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16.0),
                 ),
-                child: ListTile(
-                  title: Text(
-                    dabba[index].title,
-                    style: TextStyle(
-                      decoration: dabba[index].check == true
-                          ? TextDecoration.lineThrough
-                          : TextDecoration.none,
-                    ),
-                  ),
-                  leading: Checkbox(
-                    value: dabba[index].check,
-                    onChanged: (value) {
-                      setState(() {
-                        if (value != null) {
-                          dabba[index].check = value;
-                        }
-                      });
-                    },
-                  ),
-                  trailing: SizedBox(
-                    width: 100.0,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            editdialog(
-                              dabba[index],
-                              titlecontroller.text,
-                            );
-                          },
-                          icon: const Icon(Icons.edit),
+                suffixIcon: IconButton(
+                  onPressed: () async {
+                    await provider.add(titlecontroller);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).clearSnackBars();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('New ToDo has been added!!!'),
                         ),
-                        IconButton(
-                          onPressed: () async {
-                            await dabba[index].delete();
-                          },
-                          icon: const Icon(Icons.delete),
-                        ),
-                      ],
-                    ),
-                  ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.done),
                 ),
-              );
-            },
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color.fromARGB(200, 167, 194, 208),
-        onPressed: adddialog,
-        child: const Icon(Icons.add),
+              ),
+            ),
+            const SizedBox(height: 30),
+            Expanded(
+              child: ListView.builder(
+                itemCount: provider.checkedToDos.length,
+                itemBuilder: (context, index) {
+                  final dabba = provider.checkedToDos[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(198, 119, 168, 192),
+                        borderRadius: BorderRadius.circular(16.0),
+                      ),
+                      child: ListTile(
+                        title: Text(
+                          dabba.title,
+                          style: TextStyle(
+                            decoration: dabba.check == true
+                                ? TextDecoration.lineThrough
+                                : TextDecoration.none,
+                          ),
+                        ),
+                        leading: Checkbox(
+                          value: dabba.check,
+                          onChanged: (value) {
+                            provider.checkBox(value, dabba);
+                          },
+                        ),
+                        trailing: SizedBox(
+                          width: 100.0,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              IconButton(
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Edit ToDo'),
+                                      content: TextField(
+                                        controller: textcontroller,
+                                        decoration: const InputDecoration(
+                                          hintText: 'Edit ToDo',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            provider.edit(
+                                                dabba, textcontroller);
+                                            if (provider.pop) {
+                                              Navigator.of(context).pop();
+                                            }
+                                          },
+                                          child: const Text('Edit'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () {
+                                            textcontroller.clear();
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: const Text('Cancel'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.edit),
+                              ),
+                              IconButton(
+                                onPressed: () async {
+                                  await provider.deleteToDo(index);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context)
+                                        .clearSnackBars();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'ToDo has been deleted!!!',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                                icon: const Icon(Icons.delete),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await provider.clearToDo();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('All completed ToDos are removed!!!'),
+                    ),
+                  );
+                }
+              },
+              child: const Text('Clear'),
+            ),
+          ],
+        ),
       ),
     );
   }
