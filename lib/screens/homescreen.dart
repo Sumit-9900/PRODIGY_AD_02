@@ -165,6 +165,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 }
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(200, 167, 194, 208),
+                foregroundColor: Colors.black,
+              ),
               child: const Text('Clear'),
             ),
           ],
