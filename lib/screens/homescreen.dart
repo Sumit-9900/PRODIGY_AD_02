@@ -111,6 +111,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                             if (provider.pop) {
                                               Navigator.of(context).pop();
                                             }
+                                            ScaffoldMessenger.of(context)
+                                                .clearSnackBars();
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                    'ToDo has been edited!!!'),
+                                              ),
+                                            );
                                           },
                                           child: const Text('Edit'),
                                         ),
@@ -156,11 +165,18 @@ class _HomeScreenState extends State<HomeScreen> {
             ElevatedButton(
               onPressed: () async {
                 await provider.clearToDo();
-                if (context.mounted) {
+                if (context.mounted && provider.checkedToDos.isNotEmpty) {
                   ScaffoldMessenger.of(context).clearSnackBars();
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('All completed ToDos are removed!!!'),
+                    ),
+                  );
+                } else if (context.mounted && provider.checkedToDos.isEmpty) {
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('No ToDos to clear!!!'),
                     ),
                   );
                 }
